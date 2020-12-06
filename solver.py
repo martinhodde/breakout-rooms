@@ -17,10 +17,12 @@ def solve(G, s):
         D: Dictionary mapping for student to breakout room r e.g. {0:2, 1:0, 2:1, 3:2}
         k: Number of breakout rooms
     """
-
-    #sort values in descending happiness/stress order
-    #happiness = G.edges[i, j]['happiness']
-    #stress = G.edges[i, j]['stress']
+    #Pair people by highest happiness value (sort by happiness, pair, etc)
+    #Pick the pair with the lowest stress
+    #Find value with highest happiness/stress ratio, that sees an improvment when u break the pair 
+    #Assign the value to a new group, decrease room count if a room is emptied
+    #Repeat, making sure that each room is valid, when peeps can be moved, finish
+    
     nodes = list(G.nodes)
     n = len(nodes)
     edges = []
@@ -36,6 +38,8 @@ def solve(G, s):
     rooms = {}
     stress = {}
 
+    stress_budget = s / 50
+
     def new_room(i,j):
         nonlocal k
         k += 1
@@ -47,16 +51,16 @@ def solve(G, s):
     def add_to_room(i, j):
         room_number = D[i]
         potential_stress = stress[room_number] + stress_from_adding(j, rooms[room_number])
-        if potential_stress < s:
+        if potential_stress < stress_budget:
             rooms[room_number].append(j)
             D[j] = room_number
             stress[room_number] = potential_stress
     
     def stress_from_adding(i, others):
-        tot = 0
+        tot = 0.0
         for j in others:
-            tot += G[i,j]['stress']
-        return stress
+            tot += G.edges[i, j]['stress']
+        return tot
 
     while edges:
         top = edges.pop(0)
