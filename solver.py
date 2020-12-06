@@ -19,10 +19,10 @@ def solve(G, s):
     """
     #Pair people by highest happiness value (sort by happiness, pair, etc)
     #Pick the pair with the lowest stress
-    #Find value with highest happiness/stress ratio, that sees an improvment when u break the pair 
+    #Find value with lowest happiness/stress ratio, that sees an improvment when u break the pair
     #Assign the value to a new group, decrease room count if a room is emptied
     #Repeat, making sure that each room is valid, when peeps can be moved, finish
-    
+
     nodes = list(G.nodes)
     n = len(nodes)
     edges = []
@@ -33,12 +33,12 @@ def solve(G, s):
             edges.append((i, j, val))
     edges.sort(reverse = True, key = lambda t: t[2])
 
-    k = 0
+    k = n/2
     D = {}
     rooms = {}
     stress = {}
 
-    stress_budget = s / 50
+    stress_budget = s / k
 
     def new_room(i,j):
         nonlocal k
@@ -47,7 +47,7 @@ def solve(G, s):
         D[j] = k
         rooms[k] = [i,j]
         stress[k] = G.edges[i,j]['stress']
-    
+
     def add_to_room(i, j):
         room_number = D[i]
         potential_stress = stress[room_number] + stress_from_adding(j, rooms[room_number])
@@ -55,7 +55,7 @@ def solve(G, s):
             rooms[room_number].append(j)
             D[j] = room_number
             stress[room_number] = potential_stress
-    
+
     def stress_from_adding(i, others):
         tot = 0.0
         for j in others:
@@ -68,7 +68,7 @@ def solve(G, s):
         if i in D and j in D:
             continue
         elif i in D and j not in D:
-            add_to_room(i, j) 
+            add_to_room(i, j)
         elif j in D and i not in D:
             add_to_room(j,i)
         elif i not in D and j not in D:
