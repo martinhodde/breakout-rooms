@@ -21,7 +21,6 @@ def validate_file(path):
 def read_input_file(path, max_size=None):
     """
     Parses and validates an input file
-
     :param path: str, a path
     :param max_size: int, number of max add_nodes_from
     :return: networkx Graph is the input is well formed, AssertionError thrown otherwise
@@ -78,7 +77,6 @@ def write_input_file(G, stress_budget, path):
 def read_output_file(path, G, s):
     """
     Parses and validates an output file
-
     :param path: str, a path
     :param G: the input graph corresponding to this output
     :return: networkx Graph is the output is well formed, AssertionError thrown otherwise
@@ -114,7 +112,6 @@ def read_output_file(path, G, s):
 def write_output_file(D, path):
     """
     Writes a mapping to an output file
-
     :param path: str, a path
     :param D: dict, a mapping
     :return: None -- creates a text file
