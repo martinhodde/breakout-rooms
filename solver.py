@@ -23,6 +23,7 @@ def solve(G, s):
     #Assign the value to a new group, decrease room count if a room is emptied
     #Repeat, making sure that each room is valid, when peeps can be moved, finish
 
+    #listing nodes in decreasing happiness/stress order
     nodes = list(G.nodes)
     n = len(nodes)
     edges = []
@@ -30,15 +31,17 @@ def solve(G, s):
         for j in range(i):
             h, s =  G.edges[i, j]['happiness'], G.edges[i, j]['stress']
             val = float('inf') if s == 0 else h / s
-            edges.append((i, j, val))
+            edges.append((i, j, val, s, h))
     edges.sort(reverse = True, key = lambda t: t[2])
 
-    k = n/2
+    max = n/2
+    k = 0
     D = {}
-    rooms = {}
-    stress = {}
+    rooms = []
+    stress = []
+    stress_budget = s / max
+    #form groups of pairs
 
-    stress_budget = s / k
 
     def new_room(i,j):
         nonlocal k
@@ -61,6 +64,21 @@ def solve(G, s):
         for j in others:
             tot += G.edges[i, j]['stress']
         return tot
+    #Create pairings in different rooms
+    for edge in edges:
+        i = edge[0]
+        j = edge[1]
+        currKeys = D.keys()
+        if i in currKeys || j in currKeys:
+            pass
+        else:
+            new_room(i,j)
+    #Find room with lowest happiness
+    if is_valid_solution(D, G, s, k):
+        pass
+    else:
+        pass
+
 
     while edges:
         top = edges.pop(0)
