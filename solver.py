@@ -75,9 +75,16 @@ def solve(G, s):
             new_room(i,j)
     #Find room with lowest happiness
     if is_valid_solution(D, G, s, k):
-        pass
-    else:
-        pass
+        while True: # ?????
+            minHRoom = min(rooms, key = lambda r: calculate_happiness_for_room(r, G))
+            minH = calculate_happiness_for_room(minHRoom, G)
+            for person in minHRoom:
+                possibilities = rooms.sort(reverse = True, key = lambda r: calculate_happiness_for_room(r + [person], G))
+                for pos in possibilities:
+                    if calculate_stress_for_room(pos + [person], G) < s / (k-1):
+                        minHRoom.remove(person)
+                        add_to_room(pos[0], person)
+                    else:
 
 
     while edges:
