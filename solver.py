@@ -1,12 +1,13 @@
 import networkx as nx
-import numpy as np
+import math
+import random as rand
+import copy
 from parse import read_input_file, write_output_file
-from utils import is_valid_solution, calculate_happiness
+from utils import *
 import sys
 from os.path import basename, normpath
 import glob
 from multiprocessing import Pool, cpu_count
-import glob
 
 def solve(G, s):
     """
@@ -24,96 +25,163 @@ def solve(G, s):
     #Repeat, making sure that each room is valid, when peeps can be moved, finish
 
     #listing nodes in decreasing happiness/stress order
+    # nodes = list(G.nodes)
+    # n = len(nodes)
+    # edges = []
+    # for i in range(n):
+    #     for j in range(i):
+    #         h, s =  G.edges[i, j]['happiness'], G.edges[i, j]['stress']
+    #         val = float('inf') if s == 0 else h / s
+    #         edges.append((i, j, val, s, h))
+    # edges.sort(reverse = True, key = lambda t: t[2])
+
+    # k = 0
+    # D = {}
+    # rooms = []
+    # stress = []
+    # stress_budget = s
+
+    # def new_room(i,j):
+    #     nonlocal k
+    #     k += 1
+    #     D[i] = k
+    #     D[j] = k
+    #     rooms[k] = [i,j]
+    #     stress[k] = G.edges[i,j]['stress']
+
+    # def add_to_room(i, j):
+    #     room_number = D[i]
+    #     potential_stress = stress[room_number] + stress_from_adding(j, rooms[room_number])
+    #     if potential_stress < stress_budget:
+    #         rooms[room_number].append(j)
+    #         D[j] = room_number
+    #         stress[room_number] = potential_stress
+
+    # def stress_from_adding(i, others):
+    #     tot = 0.0
+    #     for j in others:
+    #         tot += G.edges[i, j]['stress']
+    #     return tot
+
+    # for edge in edges:
+    #     i = edge[0]
+    #     j = edge[1]
+    #     currKeys = D.keys()
+    #     if i in currKeys or j in currKeys:
+    #         pass
+    #     else:
+    #         new_room(i,j)
+
+    # if is_valid_solution(D, G, s, k):
+    #     while True: # ?????
+    #         minHRoom = min(rooms, key = lambda r: calculate_happiness_for_room(r, G))
+    #         for person in minHRoom:
+    #             possibilities = rooms.sort(reverse = True, key = lambda r: calculate_happiness_for_room(r + [person], G))
+    #             for pos in possibilities:
+    #                 if calculate_stress_for_room(pos + [person], G) < s / (k-1):
+    #                     minHRoom.remove(person)
+    #                     add_to_room(pos[0], person)
+    #                 else:
+                    
+    # else:
+
+    # while edges:
+    #     top = edges.pop(0)
+    #     i, j = top[0], top[1]
+    #     if i in D and j in D:
+    #         continue
+    #     elif i in D and j not in D:
+    #         add_to_room(i, j)
+    #     elif j in D and i not in D:
+    #         add_to_room(j,i)
+    #     elif i not in D and j not in D:
+    #         new_room(i, j)
+
+    return sim_annealing(G, s)
+
+def sim_annealing(G, s):
+    
     nodes = list(G.nodes)
     n = len(nodes)
-    edges = []
-    for i in range(n):
-        for j in range(i):
-            h, s =  G.edges[i, j]['happiness'], G.edges[i, j]['stress']
-            val = float('inf') if s == 0 else h / s
-            edges.append((i, j, val, s, h))
-    edges.sort(reverse = True, key = lambda t: t[2])
+    D = {student : student for student in range(n)}
+    room_assignments = [[node] for node in nodes]
 
-    max = n/2
-    k = 0
-    D = {}
-    rooms = []
-    stress = []
-    stress_budget = s / max
-    #form groups of pairs
+    def E(G, rooms):
+        stress, happiness = 0, 0
+        for room in rooms:
+            happiness += calculate_happiness_for_room(room, G)
+            stress += calculate_stress_for_room(room, G)
+        if happiness == 0:
+            return math.inf
+        else :
+            return stress / happiness
 
+    def delta_E(G, rooms_curr, rooms_new):
+        return E(G, rooms_new) - E(G, rooms_curr)
 
-    def new_room(i,j):
-        nonlocal k
-        k += 1
-        D[i] = k
-        D[j] = k
-        rooms[k] = [i,j]
-        stress[k] = G.edges[i,j]['stress']
+    def P(G, rooms_curr, rooms_new, temp):
+        return 1 / (1 +  math.exp(-delta_E(G, rooms_curr, rooms_new) / temp))
+    
+    def add_to_room(room_number, person, D, room_assignments):
+        from_room = D[person]
+        if from_room == room_number:
+            return False, None, None, None
+        new_D = D.copy()
+        new_rooms = copy.deepcopy(room_assignments)
 
-    def add_to_room(i, j):
-        room_number = D[i]
-        potential_stress = stress[room_number] + stress_from_adding(j, rooms[room_number])
-        if potential_stress < stress_budget:
-            rooms[room_number].append(j)
-            D[j] = room_number
-            stress[room_number] = potential_stress
+        old_room = new_rooms[from_room]
+        old_room.remove(person)
+        if not old_room:
+            new_rooms.remove(old_room)
+        new_rooms[room_number].append(person)
+        new_D[person] = room_number
+        return True, new_D, new_rooms
 
-    def stress_from_adding(i, others):
-        tot = 0.0
-        for j in others:
-            tot += G.edges[i, j]['stress']
-        return tot
-    #Create pairings in different rooms
-    for edge in edges:
-        i = edge[0]
-        j = edge[1]
-        currKeys = D.keys()
-        if i in currKeys || j in currKeys:
-            pass
+    def temperature(t):
+        return 1 / t
+
+    min_temp, t = 0.04, 0.02
+
+    while not is_valid_solution(D, G, s, len(room_assignments)) or temperature(t) > min_temp:
+        while True:
+            num_rooms = len(room_assignments)
+            rand_room = rand.randint(0, num_rooms - 1)
+            num_students = len(room_assignments[rand_room])
+            rand_student = rand.randint(0, num_students - 1)
+            success, new_D, new_rooms = add_to_room(rand_room, rand_student, D, room_assignments)
+            if success:
+                break
+        delta = delta_E(G, room_assignments, new_rooms)
+        if delta < 0:
+            room_assignments = new_rooms
+            D = new_D
         else:
-            new_room(i,j)
-    #Find room with lowest happiness
-    if is_valid_solution(D, G, s, k):
-        while True: # ?????
-            minHRoom = min(rooms, key = lambda r: calculate_happiness_for_room(r, G))
-            minH = calculate_happiness_for_room(minHRoom, G)
-            for person in minHRoom:
-                possibilities = rooms.sort(reverse = True, key = lambda r: calculate_happiness_for_room(r + [person], G))
-                for pos in possibilities:
-                    if calculate_stress_for_room(pos + [person], G) < s / (k-1):
-                        minHRoom.remove(person)
-                        add_to_room(pos[0], person)
-                    else:
-
-
-    while edges:
-        top = edges.pop(0)
-        i, j = top[0], top[1]
-        if i in D and j in D:
-            continue
-        elif i in D and j not in D:
-            add_to_room(i, j)
-        elif j in D and i not in D:
-            add_to_room(j,i)
-        elif i not in D and j not in D:
-            new_room(i, j)
-
-    return D,k
+            v = rand.uniform(0,1)
+            temp = temperature(t)
+            if P(G, room_assignments, new_rooms, temp) > v:
+                room_assignments = new_rooms
+                D = new_D
+        t += 0.02
+        
+    k = len(room_assignments)
+    return D, k
 
 def evaluate(input_path):
     output_path = 'outputs/' + basename(normpath(input_path))[:-3] + '.out'
     G, s = read_input_file(input_path)
     D, k = solve(G, s)
     assert is_valid_solution(D, G, s, k)
+    print("solved ", input_path)
+    D, k = solve(G, s)
+    assert is_valid_solution(D, G, s, k)
+    print("solved ", input_path)
     happiness = calculate_happiness(D, G)
     write_output_file(D, output_path)
-
 
 if __name__ == '__main__':
     p = Pool(cpu_count())
     inputs = glob.glob('inputs/small-*')
-    p.map(evaluate, inputs)
+    p.imap_unordered(evaluate, inputs)
     p.close()
     p.join()
 
