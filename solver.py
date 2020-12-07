@@ -69,7 +69,7 @@ def sim_annealing(G, s):
     min_temp, t = 0.04, 0.02
 
     while temperature(t) > min_temp or not is_valid_solution(D, G, s, len(room_assignments)):
-        if temperature(t) < 0.005:
+        if temperature(t) < 0.001:
             return D, len(room_assignments)
         while True:
             num_rooms = len(room_assignments)
