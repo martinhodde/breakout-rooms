@@ -34,12 +34,11 @@ def solve(G, s):
             edges.append((i, j, val, s, h))
     edges.sort(reverse = True, key = lambda t: t[2])
 
-    max = n/2
     k = 0
     D = {}
     rooms = []
     stress = []
-    stress_budget = s / max
+    stress_budget = s / 50
     #form groups of pairs
 
 
