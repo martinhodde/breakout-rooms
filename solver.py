@@ -69,7 +69,7 @@ def sim_annealing(G, s):
     min_temp, t = 0.04, 0.02
 
     while temperature(t) > min_temp or not is_valid_solution(D, G, s, len(room_assignments)):
-        if temperature(t) < 0.001:
+        if temperature(t) < 0.02:
             return D, len(room_assignments)
         while True:
             num_rooms = len(room_assignments)
@@ -105,16 +105,16 @@ def evaluate(input_path):
     print("solved ", input_path)
     if not os.path.exists(output_path):
         write_output_file(D, output_path)
-        os.rename(input_path, 'used_' + input_path)
+        os.rename(input_path, 'used_inputs/' + basename(normpath(input_path)))
 
 if __name__ == '__main__':
-    p = Pool(cpu_count())
-    inputs = glob.glob('inputs/large-*')
+    inputs = glob.glob('inputs/medium-*')
     while inputs:
+        p = Pool(cpu_count())
         p.imap_unordered(evaluate, inputs)
-        inputs = glob.glob('inputs/large-*')
-    p.close()
-    p.join()
+        p.close()
+        p.join()
+        inputs = glob.glob('inputs/medium-*')
 
 # Here's an example of how to run your solver.
 
