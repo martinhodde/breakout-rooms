@@ -1,4 +1,3 @@
-import networkx as nx
 import math
 import random as rand
 import copy
@@ -6,6 +5,7 @@ from parse import read_input_file, write_output_file
 from utils import *
 import sys
 from os.path import basename, normpath
+import os
 import glob
 from multiprocessing import Pool, cpu_count
 
@@ -148,6 +148,8 @@ def sim_annealing(G, s):
     min_temp, t = 0.04, 0.02
 
     while temperature(t) > min_temp or not is_valid_solution(D, G, s, len(room_assignments)):
+        if temperature(t) < 0.005:
+            return D, len(room_assignments)
         while True:
             num_rooms = len(room_assignments)
             rand_from_room_number = rand.randint(0, num_rooms - 1)
@@ -180,13 +182,16 @@ def evaluate(input_path):
     D, k = solve(G, s)
     assert is_valid_solution(D, G, s, k)
     print("solved ", input_path)
-    happiness = calculate_happiness(D, G)
-    write_output_file(D, output_path)
+    if not os.path.exists(output_path):
+        write_output_file(D, output_path)
+        os.rename(input_path, 'used_' + input_path)
 
 if __name__ == '__main__':
     p = Pool(cpu_count())
-    inputs = glob.glob('inputs/small-*')
-    p.imap_unordered(evaluate, inputs)
+    inputs = glob.glob('inputs/medium-*')
+    while inputs:
+        p.imap_unordered(evaluate, inputs)
+        inputs = glob.glob('inputs/medium-*')
     p.close()
     p.join()
 
