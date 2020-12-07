@@ -113,7 +113,7 @@ def sim_annealing(G, s):
             stress += calculate_stress_for_room(room, G)
         if happiness == 0:
             return math.inf
-        else :
+        else:
             return stress / happiness
 
     def delta_E(G, rooms_curr, rooms_new):
@@ -142,7 +142,7 @@ def sim_annealing(G, s):
 
     min_temp, t = 0.04, 0.02
 
-    while not is_valid_solution(D, G, s, len(room_assignments)) or temperature(t) > min_temp:
+    while temperature(t) > min_temp or not is_valid_solution(D, G, s, len(room_assignments)):
         while True:
             num_rooms = len(room_assignments)
             rand_room = rand.randint(0, num_rooms - 1)
@@ -169,9 +169,6 @@ def sim_annealing(G, s):
 def evaluate(input_path):
     output_path = 'outputs/' + basename(normpath(input_path))[:-3] + '.out'
     G, s = read_input_file(input_path)
-    D, k = solve(G, s)
-    assert is_valid_solution(D, G, s, k)
-    print("solved ", input_path)
     D, k = solve(G, s)
     assert is_valid_solution(D, G, s, k)
     print("solved ", input_path)
