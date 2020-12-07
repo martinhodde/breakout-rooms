@@ -99,6 +99,26 @@ def solve(G, s):
 
     return sim_annealing(G, s)
 
+def add_to_room(room_number, person, D, room_assignments):
+    from_room = D[person]
+    if from_room == room_number:
+        return False, None, None
+    new_D = D.copy()
+    new_rooms = copy.deepcopy(room_assignments)
+
+    old_room = new_rooms[from_room]
+    old_room.remove(person)
+    if not old_room:
+        new_rooms.remove(old_room)
+        for person in new_D:
+            if new_D[person] > from_room:
+                new_D[person] -= 1
+        if room_number > from_room:
+            room_number -= 1
+    new_rooms[room_number].append(person)
+    new_D[person] = room_number
+    return True, new_D, new_rooms
+
 def sim_annealing(G, s):
     
     nodes = list(G.nodes)
@@ -121,21 +141,6 @@ def sim_annealing(G, s):
 
     def P(G, rooms_curr, rooms_new, temp):
         return 1 / (1 +  math.exp(-delta_E(G, rooms_curr, rooms_new) / temp))
-    
-    def add_to_room(room_number, person, D, room_assignments):
-        from_room = D[person]
-        if from_room == room_number:
-            return False, None, None, None
-        new_D = D.copy()
-        new_rooms = copy.deepcopy(room_assignments)
-
-        old_room = new_rooms[from_room]
-        old_room.remove(person)
-        if not old_room:
-            new_rooms.remove(old_room)
-        new_rooms[room_number].append(person)
-        new_D[person] = room_number
-        return True, new_D, new_rooms
 
     def temperature(t):
         return 1 / t
@@ -145,10 +150,13 @@ def sim_annealing(G, s):
     while not is_valid_solution(D, G, s, len(room_assignments)) or temperature(t) > min_temp:
         while True:
             num_rooms = len(room_assignments)
-            rand_room = rand.randint(0, num_rooms - 1)
-            num_students = len(room_assignments[rand_room])
-            rand_student = rand.randint(0, num_students - 1)
-            success, new_D, new_rooms = add_to_room(rand_room, rand_student, D, room_assignments)
+            rand_from_room_number = rand.randint(0, num_rooms - 1)
+            rand_from_room = room_assignments[rand_from_room_number]
+            rand_student = rand.choice(rand_from_room)
+
+            rand_to_room_number = rand.randint(0, num_rooms-1)
+
+            success, new_D, new_rooms = add_to_room(rand_to_room_number, rand_student, D, room_assignments)
             if success:
                 break
         delta = delta_E(G, room_assignments, new_rooms)
@@ -169,9 +177,6 @@ def sim_annealing(G, s):
 def evaluate(input_path):
     output_path = 'outputs/' + basename(normpath(input_path))[:-3] + '.out'
     G, s = read_input_file(input_path)
-    D, k = solve(G, s)
-    assert is_valid_solution(D, G, s, k)
-    print("solved ", input_path)
     D, k = solve(G, s)
     assert is_valid_solution(D, G, s, k)
     print("solved ", input_path)
