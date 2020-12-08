@@ -108,13 +108,13 @@ def evaluate(input_path):
         os.rename(input_path, 'used_inputs/' + basename(normpath(input_path)))
 
 if __name__ == '__main__':
-    inputs = glob.glob('inputs/medium-*')
+    inputs = glob.glob('inputs/large-*')
     while inputs:
         p = Pool(cpu_count())
         p.imap_unordered(evaluate, inputs)
         p.close()
         p.join()
-        inputs = glob.glob('inputs/medium-*')
+        inputs = glob.glob('inputs/large-*')
 
 # Here's an example of how to run your solver.
 
