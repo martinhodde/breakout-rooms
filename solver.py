@@ -161,24 +161,32 @@ def sim_annealing(G, s):
     k = len(room_assignments)
     return D, k
 
+def identity_sol(G, s):
+    nodes = list(G.nodes)
+    n = len(nodes)
+    D = {}
+    for i in range(n):
+        D[i] = i
+    return D, n
+
 def evaluate(input_path):
     output_path = 'outputs/' + basename(normpath(input_path))[:-3] + '.out'
     G, s = read_input_file(input_path)
-    D, k = solve(G, s)
+    D, k = identity_sol(G, s)
     assert is_valid_solution(D, G, s, k)
     print("solved ", input_path)
     if not os.path.exists(output_path):
         write_output_file(D, output_path)
-        os.rename(input_path, 'used_inputs/' + basename(normpath(input_path)))
+        # os.rename(input_path, 'used_inputs/' + basename(normpath(input_path)))
 
 if __name__ == '__main__':
-    inputs = glob.glob('inputs/large-*')
+    inputs = glob.glob('inputs/small-*')
     while inputs:
         p = Pool(cpu_count())
         p.imap_unordered(evaluate, inputs)
         p.close()
         p.join()
-        inputs = glob.glob('inputs/large-*')
+        inputs = glob.glob('inputs/small-*')
 
 # Here's an example of how to run your solver.
 
