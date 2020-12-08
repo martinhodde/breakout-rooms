@@ -8,9 +8,8 @@ from os.path import basename, normpath
 import os
 import glob
 from multiprocessing import Pool, cpu_count
-from numba import jit, cuda
+import numba
 
-@jit(target="cuda")
 def solve(G, s):
     """
     Args:
@@ -83,7 +82,7 @@ def greedy_fast(G, s):
         elif i not in D and j not in D:
             new_room(i, j)
 
-@jit(target="cuda")
+@numba.jit
 def add_to_room(room_number, person, D, room_assignments):
     from_room = D[person]
     if from_room == room_number:
@@ -104,7 +103,7 @@ def add_to_room(room_number, person, D, room_assignments):
     new_D[person] = room_number
     return True, new_D, new_rooms
 
-@jit(target="cuda")
+@numba.jit
 def sim_annealing(G, s):
     
     nodes = list(G.nodes)
@@ -112,7 +111,6 @@ def sim_annealing(G, s):
     D = {student : student for student in range(n)}
     room_assignments = [[node] for node in nodes]
 
-    @jit(target="cuda")
     def E(G, rooms):
         stress, happiness = 0, 0
         for room in rooms:
@@ -123,11 +121,9 @@ def sim_annealing(G, s):
         else:
             return stress / happiness
 
-    @jit(target="cuda")
     def delta_E(G, rooms_curr, rooms_new):
         return E(G, rooms_new) - E(G, rooms_curr)
 
-    @jit(target="cuda")
     def P(G, rooms_curr, rooms_new, temp):
         return 1 / (1 +  math.exp(-delta_E(G, rooms_curr, rooms_new) / temp))
 
@@ -165,7 +161,6 @@ def sim_annealing(G, s):
     k = len(room_assignments)
     return D, k
 
-@jit(target="cuda")
 def evaluate(input_path):
     output_path = 'outputs/' + basename(normpath(input_path))[:-3] + '.out'
     G, s = read_input_file(input_path)
