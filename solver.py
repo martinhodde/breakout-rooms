@@ -19,7 +19,7 @@ def solve(G, s):
         D: Dictionary mapping for student to breakout room r e.g. {0:2, 1:0, 2:1, 3:2}
         k: Number of breakout rooms
     """
-    return sim_annealing(G, s)
+    return greedy_fast(G, s)
 
 def greedy_fast(G, s):
     # listing nodes in decreasing happiness/stress order
@@ -32,12 +32,6 @@ def greedy_fast(G, s):
             val = float('inf') if s == 0 else h / s
             edges.append((i, j, val, s, h))
     edges.sort(reverse = True, key = lambda t: t[2])
-
-    k = 20
-    D = {}
-    rooms = []
-    stress = []
-    stress_budget = s / k
 
     def new_room(i,j):
         nonlocal k
@@ -61,28 +55,35 @@ def greedy_fast(G, s):
             tot += G.edges[i, j]['stress']
         return tot
 
-    for edge in edges:
-        i = edge[0]
-        j = edge[1]
-        currKeys = D.keys()
-        if i in currKeys or j in currKeys:
-            pass
-        else:
-            new_room(i,j)
+    for k in range(1, n):
+        D = {}
+        rooms = []
+        stress = []
+        stress_budget = s / k
 
-    while edges:
-        top = edges.pop(0)
-        i, j = top[0], top[1]
-        if i in D and j in D:
-            continue
-        elif i in D and j not in D:
-            add_room(i, j)
-        elif j in D and i not in D:
-            add_room(j,i)
-        elif i not in D and j not in D:
-            new_room(i, j)
+        for edge in edges:
+            i = edge[0]
+            j = edge[1]
+            currKeys = D.keys()
+            if i in currKeys or j in currKeys:
+                pass
+            else:
+                new_room(i,j)
 
-@numba.jit
+        while edges:
+            if is_valid_solution(D, G, s, rooms):
+                return D, k
+            top = edges.pop(0)
+            i, j = top[0], top[1]
+            if i in D and j in D:
+                continue
+            elif i in D and j not in D:
+                add_room(i, j)
+            elif j in D and i not in D:
+                add_room(j,i)
+            elif i not in D and j not in D:
+                new_room(i, j)
+
 def add_to_room(room_number, person, D, room_assignments):
     from_room = D[person]
     if from_room == room_number:
@@ -103,7 +104,6 @@ def add_to_room(room_number, person, D, room_assignments):
     new_D[person] = room_number
     return True, new_D, new_rooms
 
-@numba.jit
 def sim_annealing(G, s):
     
     nodes = list(G.nodes)
