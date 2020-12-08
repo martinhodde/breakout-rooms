@@ -172,7 +172,7 @@ def identity_sol(G, s):
 def evaluate(input_path):
     output_path = 'outputs/' + basename(normpath(input_path))[:-3] + '.out'
     G, s = read_input_file(input_path)
-    D, k = identity_sol(G, s)
+    D, k = solve(G, s)
     assert is_valid_solution(D, G, s, k)
     print("solved ", input_path)
     if not os.path.exists(output_path):
