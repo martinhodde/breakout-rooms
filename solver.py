@@ -8,7 +8,9 @@ from os.path import basename, normpath
 import os
 import glob
 from multiprocessing import Pool, cpu_count
+from numba import jit, cuda
 
+@jit(target="cuda")
 def solve(G, s):
     """
     Args:
@@ -20,6 +22,68 @@ def solve(G, s):
     """
     return sim_annealing(G, s)
 
+def greedy_fast(G, s):
+    # listing nodes in decreasing happiness/stress order
+    nodes = list(G.nodes)
+    n = len(nodes)
+    edges = []
+    for i in range(n):
+        for j in range(i):
+            h, s =  G.edges[i, j]['happiness'], G.edges[i, j]['stress']
+            val = float('inf') if s == 0 else h / s
+            edges.append((i, j, val, s, h))
+    edges.sort(reverse = True, key = lambda t: t[2])
+
+    k = 20
+    D = {}
+    rooms = []
+    stress = []
+    stress_budget = s / k
+
+    def new_room(i,j):
+        nonlocal k
+        k += 1
+        D[i] = k
+        D[j] = k
+        rooms[k] = [i,j]
+        stress[k] = G.edges[i,j]['stress']
+
+    def add_room(i, j):
+        room_number = D[i]
+        potential_stress = stress[room_number] + stress_from_adding(j, rooms[room_number])
+        if potential_stress < stress_budget:
+            rooms[room_number].append(j)
+            D[j] = room_number
+            stress[room_number] = potential_stress
+
+    def stress_from_adding(i, others):
+        tot = 0.0
+        for j in others:
+            tot += G.edges[i, j]['stress']
+        return tot
+
+    for edge in edges:
+        i = edge[0]
+        j = edge[1]
+        currKeys = D.keys()
+        if i in currKeys or j in currKeys:
+            pass
+        else:
+            new_room(i,j)
+
+    while edges:
+        top = edges.pop(0)
+        i, j = top[0], top[1]
+        if i in D and j in D:
+            continue
+        elif i in D and j not in D:
+            add_room(i, j)
+        elif j in D and i not in D:
+            add_room(j,i)
+        elif i not in D and j not in D:
+            new_room(i, j)
+
+@jit(target="cuda")
 def add_to_room(room_number, person, D, room_assignments):
     from_room = D[person]
     if from_room == room_number:
@@ -40,6 +104,7 @@ def add_to_room(room_number, person, D, room_assignments):
     new_D[person] = room_number
     return True, new_D, new_rooms
 
+@jit(target="cuda")
 def sim_annealing(G, s):
     
     nodes = list(G.nodes)
@@ -47,6 +112,7 @@ def sim_annealing(G, s):
     D = {student : student for student in range(n)}
     room_assignments = [[node] for node in nodes]
 
+    @jit(target="cuda")
     def E(G, rooms):
         stress, happiness = 0, 0
         for room in rooms:
@@ -57,9 +123,11 @@ def sim_annealing(G, s):
         else:
             return stress / happiness
 
+    @jit(target="cuda")
     def delta_E(G, rooms_curr, rooms_new):
         return E(G, rooms_new) - E(G, rooms_curr)
 
+    @jit(target="cuda")
     def P(G, rooms_curr, rooms_new, temp):
         return 1 / (1 +  math.exp(-delta_E(G, rooms_curr, rooms_new) / temp))
 
@@ -97,6 +165,7 @@ def sim_annealing(G, s):
     k = len(room_assignments)
     return D, k
 
+@jit(target="cuda")
 def evaluate(input_path):
     output_path = 'outputs/' + basename(normpath(input_path))[:-3] + '.out'
     G, s = read_input_file(input_path)
