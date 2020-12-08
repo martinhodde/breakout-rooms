@@ -8,6 +8,7 @@ from os.path import basename, normpath
 import os
 import glob
 from multiprocessing import Pool, cpu_count
+import numba
 
 def solve(G, s):
     """
@@ -18,7 +19,70 @@ def solve(G, s):
         D: Dictionary mapping for student to breakout room r e.g. {0:2, 1:0, 2:1, 3:2}
         k: Number of breakout rooms
     """
-    return sim_annealing(G, s)
+    return greedy_fast(G, s)
+
+def greedy_fast(G, s):
+    # listing nodes in decreasing happiness/stress order
+    nodes = list(G.nodes)
+    n = len(nodes)
+    edges = []
+    for i in range(n):
+        for j in range(i):
+            h, s =  G.edges[i, j]['happiness'], G.edges[i, j]['stress']
+            val = float('inf') if s == 0 else h / s
+            edges.append((i, j, val, s, h))
+    edges.sort(reverse = True, key = lambda t: t[2])
+
+    def new_room(i,j):
+        nonlocal k
+        k += 1
+        D[i] = k
+        D[j] = k
+        rooms[k] = [i,j]
+        stress[k] = G.edges[i,j]['stress']
+
+    def add_room(i, j):
+        room_number = D[i]
+        potential_stress = stress[room_number] + stress_from_adding(j, rooms[room_number])
+        if potential_stress < stress_budget:
+            rooms[room_number].append(j)
+            D[j] = room_number
+            stress[room_number] = potential_stress
+
+    def stress_from_adding(i, others):
+        tot = 0.0
+        for j in others:
+            tot += G.edges[i, j]['stress']
+        return tot
+
+    for k in range(1, n):
+        D = {}
+        rooms = []
+        stress = []
+        stress_budget = s / k
+
+        for edge in edges:
+            i = edge[0]
+            j = edge[1]
+            currKeys = D.keys()
+            if i in currKeys or j in currKeys:
+                pass
+            else:
+                new_room(i,j)
+
+        while edges:
+            if is_valid_solution(D, G, s, rooms):
+                return D, k
+            top = edges.pop(0)
+            i, j = top[0], top[1]
+            if i in D and j in D:
+                continue
+            elif i in D and j not in D:
+                add_room(i, j)
+            elif j in D and i not in D:
+                add_room(j,i)
+            elif i not in D and j not in D:
+                new_room(i, j)
 
 def add_to_room(room_number, person, D, room_assignments):
     from_room = D[person]
@@ -69,7 +133,7 @@ def sim_annealing(G, s):
     min_temp, t = 0.04, 0.02
 
     while temperature(t) > min_temp or not is_valid_solution(D, G, s, len(room_assignments)):
-        if temperature(t) < 0.01:
+        if temperature(t) < 0.005:
             return D, len(room_assignments)
         while True:
             num_rooms = len(room_assignments)
