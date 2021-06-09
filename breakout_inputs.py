@@ -1,6 +1,9 @@
 import random as rand
 
 def generate_inputs(num_students):
+    """
+    Prints randomized inputs, formatted according to specification.
+    """
     print(num_students)
     stress_budget = rand.uniform(0.1,99.9)
     print("{:.3f}".format(stress_budget))

@@ -1,4 +1,7 @@
 def rooms_happiness(G, rooms, max_stress):
+    """
+    Calculates total happiness level in a breakout room.
+    """
     def room_stats(members):
         happiness, stress = 0, 0
         for i in members:
@@ -14,11 +17,15 @@ def rooms_happiness(G, rooms, max_stress):
             return None
         happ += res[0]
     return happ
-def werk(G, max_stress):
+
+def run(G, max_stress):
+    """
+    Runs brute force algorithm to find optimal room assignment, albeit slowly.
+    """
     nodes = list(G.nodes)
     best_rooms = None
-    best_happiness = -69
-    best_k = -69
+    best_happiness = -float("inf")
+    best_k = -float("inf")
     n = len(nodes)
     for k in range(3, 4):
         print("k={}".format(k))
