@@ -57,16 +57,16 @@ def simulated_annealing(graph, stress_budget):
     # Geometric cooling schedule parameters
     initial_temp = 50.0
     min_temp = 0.5
-    cooling_rate = 0.97  # Faster cooling (was 0.99) for performance
+    cooling_rate = 0.98
     iterations_per_temp = max(3, num_students // 3)
-    max_iterations = 500 * num_students  # Reduced from 1000x for performance
-    reheat_threshold = 150  # Reduced threshold (was 200) for faster convergence
+    max_iterations = 750 * num_students
+    reheat_threshold = 180
 
     temperature = initial_temp
     iteration = 0
     no_improve_count = 0
     reheat_count = 0
-    max_reheats = 3  # Early termination if reheating doesn't help
+    max_reheats = 5
 
     while temperature > min_temp and iteration < max_iterations and reheat_count < max_reheats:
         for _ in range(iterations_per_temp):
