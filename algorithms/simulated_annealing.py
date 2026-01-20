@@ -51,19 +51,24 @@ def simulated_annealing(graph, stress_budget):
     best_assignment = current_assignment.copy()
     best_happiness, _ = evaluate_solution(current_assignment)
 
+    # Cache current solution's happiness to avoid redundant calculations
+    current_happiness = best_happiness
+
     # Geometric cooling schedule parameters
     initial_temp = 50.0
     min_temp = 0.5
-    cooling_rate = 0.99
+    cooling_rate = 0.97  # Faster cooling (was 0.99) for performance
     iterations_per_temp = max(3, num_students // 3)
-    max_iterations = 1000 * num_students
-    reheat_threshold = 200  # Reheat if stuck in local optimum
+    max_iterations = 500 * num_students  # Reduced from 1000x for performance
+    reheat_threshold = 150  # Reduced threshold (was 200) for faster convergence
 
     temperature = initial_temp
     iteration = 0
     no_improve_count = 0
+    reheat_count = 0
+    max_reheats = 3  # Early termination if reheating doesn't help
 
-    while temperature > min_temp and iteration < max_iterations:
+    while temperature > min_temp and iteration < max_iterations and reheat_count < max_reheats:
         for _ in range(iterations_per_temp):
             iteration += 1
             num_rooms = len(room_assignments)
@@ -86,7 +91,7 @@ def simulated_annealing(graph, stress_budget):
                     if to_room_idx != from_room_idx:
                         new_assignment = current_assignment.copy()
                         new_assignment[student] = to_room_idx
-                        new_assignment = renumber_rooms(new_assignment)
+                        # No renumbering needed for transfer
                         new_room_lists = get_room_lists(new_assignment)
 
             # Swap: Exchange students between two rooms
@@ -98,6 +103,7 @@ def simulated_annealing(graph, stress_budget):
                     new_assignment = current_assignment.copy()
                     new_assignment[student_a] = room_b_idx
                     new_assignment[student_b] = room_a_idx
+                    # No renumbering needed for swap
                     new_room_lists = get_room_lists(new_assignment)
 
             # Merge: Combine two rooms into one
@@ -106,6 +112,7 @@ def simulated_annealing(graph, stress_budget):
                 new_assignment = current_assignment.copy()
                 for student in room_assignments[room_b_idx]:
                     new_assignment[student] = room_a_idx
+                # Renumber after merge to keep room IDs contiguous
                 new_assignment = renumber_rooms(new_assignment)
                 new_room_lists = get_room_lists(new_assignment)
 
@@ -120,6 +127,7 @@ def simulated_annealing(graph, stress_budget):
                     new_room_id = max(current_assignment.values()) + 1
                     for student in students_to_move:
                         new_assignment[student] = new_room_id
+                    # Renumber after split to keep room IDs contiguous
                     new_assignment = renumber_rooms(new_assignment)
                     new_room_lists = get_room_lists(new_assignment)
 
@@ -127,8 +135,7 @@ def simulated_annealing(graph, stress_budget):
                 continue
 
             new_happiness, new_valid = evaluate_solution(new_assignment)
-            current_happiness, current_valid = evaluate_solution(current_assignment)
-
+            # Use cached current_happiness instead of re-evaluating
             happiness_delta = new_happiness - current_happiness
 
             # Acceptance criterion: always accept improvements, probabilistically accept worse solutions
@@ -145,6 +152,7 @@ def simulated_annealing(graph, stress_budget):
             if accept_move:
                 current_assignment = new_assignment
                 room_assignments = new_room_lists
+                current_happiness = new_happiness  # Update cached happiness
 
                 if new_valid and new_happiness > best_happiness:
                     best_happiness = new_happiness
@@ -161,6 +169,7 @@ def simulated_annealing(graph, stress_budget):
         if no_improve_count > reheat_threshold:
             temperature = min(temperature * 2, initial_temp / 2)
             no_improve_count = 0
+            reheat_count += 1
 
     return best_assignment, len(set(best_assignment.values()))
 
