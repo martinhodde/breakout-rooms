@@ -144,7 +144,7 @@ def create_greedy_chromosome(graph, stress_budget, num_students):
 
         if best_merge:
             room_a, room_b = best_merge
-            for i in range(n):
+            for i in range(num_students):
                 if chromosome[i] == room_b:
                     chromosome[i] = room_a
             active_rooms.remove(room_b)
