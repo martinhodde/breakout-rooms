@@ -63,13 +63,13 @@ Benchmark on 90 files (30 small, 30 medium, 30 large):
 
 | Algorithm | Avg Happiness | Win Rate | Total Time |
 |-----------|---------------|----------|------------|
-| **Genetic** | **1659.82** | 21.1% | 836.5s |
-| **Greedy** | **1631.19** | **44.4%** | 77.4s |
-| **Simulated Annealing** | 1457.66 | 34.4% | **12.1s** |
+| **Greedy** | **1644.06** | **43.3%** | 82.9s |
+| **Genetic** | 1628.74 | 22.2% | 857.7s |
+| **Simulated Annealing** | 1568.28 | 34.4% | **23.0s** |
 
 **By Size:**
-- **Small** (n ≤ 20): Genetic wins quality, SA wins speed (0.026s avg)
-- **Medium** (20 < n ≤ 50): Genetic best quality, Greedy best win rate (14/30)
-- **Large** (n > 50): Greedy dominates (22/30 wins), SA 10× faster than Greedy
+- **Small** (n ≤ 20): SA dominates (63% win rate), 7.5× faster than Genetic
+- **Medium** (20 < n ≤ 50): Genetic slightly ahead in quality, Greedy/SA competitive
+- **Large** (n > 50): Greedy best (73% win rate), SA 4.6× faster than Greedy
 
-**Key Takeaway:** Greedy achieves the best balance of solution quality and speed. Simulated Annealing is the fastest option when speed is critical.
+**Key Takeaway:** Greedy achieves the best overall balance. Simulated Annealing offers the best speed-to-quality ratio, especially strong on small instances.
