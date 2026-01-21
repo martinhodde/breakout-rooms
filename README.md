@@ -18,9 +18,9 @@ Three optimization approaches are implemented:
 
 | Algorithm | Description | Performance |
 |-----------|-------------|-------------|
-| **Greedy + Local Search** | Greedy construction with iterative swaps | Best overall (44% win rate) |
-| **Simulated Annealing** | Greedy init + SA with geometric cooling | Fastest (0.13s avg) |
-| **Genetic Algorithm** | Evolutionary approach with crossover/mutation | Highest quality solutions |
+| **Simulated Annealing** | Greedy init + SA with geometric cooling | Best overall (44.4% win rate) |
+| **Greedy + Local Search** | Greedy construction with iterative swaps | Balanced performance (31.1% win rate) |
+| **Genetic Algorithm** | Evolutionary approach with crossover/mutation | High quality on select instances |
 
 ## Usage
 
@@ -63,13 +63,13 @@ Benchmark on 90 files (30 small, 30 medium, 30 large):
 
 | Algorithm | Avg Happiness | Win Rate | Total Time |
 |-----------|---------------|----------|------------|
-| **Greedy** | **1644.06** | **43.3%** | 82.9s |
-| **Genetic** | 1628.74 | 22.2% | 857.7s |
-| **Simulated Annealing** | 1568.28 | 34.4% | **23.0s** |
+| **Simulated Annealing** | **1534.24** | **44.4%** | **32.3s** |
+| **Genetic** | 1638.19 | 24.4% | 813.2s |
+| **Greedy** | 1615.20 | 31.1% | 80.7s |
 
 **By Size:**
-- **Small** (n ≤ 20): SA dominates (63% win rate), 7.5× faster than Genetic
-- **Medium** (20 < n ≤ 50): Genetic slightly ahead in quality, Greedy/SA competitive
-- **Large** (n > 50): Greedy best (73% win rate), SA 4.6× faster than Greedy
+- **Small** (n ≤ 20): SA dominates (86.7% win rate, 26/30 wins), Greedy 0 wins
+- **Medium** (20 < n ≤ 50): Three-way tie (all algorithms win 10/30)
+- **Large** (n > 50): Greedy best (18/30 wins), SA competitive (4/30 wins)
 
-**Key Takeaway:** Greedy achieves the best overall balance. Simulated Annealing offers the best speed-to-quality ratio, especially strong on small instances.
+**Key Takeaway:** Simulated Annealing achieves the best overall win rate at 44.4% while maintaining excellent speed (25× faster than Genetic). It completely dominates small instances and remains competitive on larger ones.
