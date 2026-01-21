@@ -55,18 +55,18 @@ def simulated_annealing(graph, stress_budget):
     current_happiness = best_happiness
 
     # Geometric cooling schedule parameters
-    initial_temp = 50.0
+    initial_temp = 75.0
     min_temp = 0.5
-    cooling_rate = 0.98
+    cooling_rate = 0.985
     iterations_per_temp = max(3, num_students // 3)
-    max_iterations = 750 * num_students
-    reheat_threshold = 180
+    max_iterations = 1000 * num_students
+    reheat_threshold = 200
 
     temperature = initial_temp
     iteration = 0
     no_improve_count = 0
     reheat_count = 0
-    max_reheats = 5
+    max_reheats = 7
 
     while temperature > min_temp and iteration < max_iterations and reheat_count < max_reheats:
         for _ in range(iterations_per_temp):
